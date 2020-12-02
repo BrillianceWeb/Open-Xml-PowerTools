@@ -214,6 +214,14 @@ namespace OpenXmlPowerTools
         // Returned object can be double/Double, int/Int32, bool/Boolean or string/String types
         public static object GetCellValue(SpreadsheetDocument document, WorksheetPart worksheet, int column, int row)
         {
+            object NumericCellValue(XElement xElement)
+            {
+                string value = xElement.Element(S.v).Value;
+                if (value.Contains("."))
+                    return Convert.ToDouble(value);
+                return Convert.ToInt32(value);
+            }
+
             XDocument worksheetXDocument = worksheet.GetXDocument();
             XElement cellValue = GetCell(worksheetXDocument, column, row);
 
@@ -221,10 +229,7 @@ namespace OpenXmlPowerTools
             {
                 if (cellValue.Attribute(NoNamespace.t) == null)
                 {
-                    string value = cellValue.Element(S.v).Value;
-                    if (value.Contains("."))
-                        return Convert.ToDouble(value);
-                    return Convert.ToInt32(value);
+                    return NumericCellValue(cellValue);
                 }
                 switch (cellValue.Attribute(NoNamespace.t).Value)
                 {
@@ -234,6 +239,10 @@ namespace OpenXmlPowerTools
                         return GetSharedString(document, System.Convert.ToInt32(cellValue.Element(S.v).Value));
                     case "inlineStr":
                         return cellValue.Element(S._is).Element(S.t).Value;
+                    case "str":
+                        return cellValue.Element(S.v).Value;
+                    case "n":
+                        return NumericCellValue(cellValue);
                 }
             }
             return null;
